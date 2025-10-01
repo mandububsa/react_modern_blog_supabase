@@ -1,19 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { User, Mail, FileText, Save } from "lucide-react";
+import supabase from "../../utils/supabase";
+import type { Claims } from "../../types/user";
 
 export default function ProfileSetup() {
   const navigate = useNavigate();
+  const [claims, setClaims] = useState<Claims>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     bio: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Here you would save the profile data
     console.log("Profile setup completed:", formData);
+    if (!formData?.name || !formData?.email || !formData?.bio) {
+      alert("값을 입력해주세요");
+      return;
+    }
+    if (!claims) {
+      alert("claims 값이 올바르지 않습니다");
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          email: formData.email,
+          display_name: formData.name,
+          bio: formData.bio,
+        })
+        .eq("id", claims.sub)
+        .select();
+
+      if (error) throw error;
+      if (data) {
+        alert("회원가입이 완료되었습니다.");
+        navigate("/blog");
+      }
+    } catch (e) {
+      console.error(e);
+    }
     // Redirect to profile page after setup
     navigate("/profile");
   };
@@ -27,6 +58,43 @@ export default function ProfileSetup() {
       [name]: value,
     }));
   };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase.auth.getClaims();
+        if (error) throw error;
+        const claims = data?.claims as Claims;
+        setClaims(claims);
+
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("*") // profiles 테이블 내 모든 데이터를 조회하는 것
+          .eq("id", claims?.sub || "")
+          .single(); // 배열이 아닌, 하나의 데이터를 객체 형태로 반환
+        if (profilesError) throw profilesError;
+
+        if (profiles.bio) {
+          alert("로그인되었습니다.");
+          navigate("/blog");
+        }
+        setFormData({
+          name: profiles?.display_name || "",
+          email: profiles?.email || "",
+          bio: profiles?.bio || "",
+        });
+        console.log(profiles);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchProfile();
+  }, [navigate]);
+
+  if (isLoading) return null;
 
   return (
     <div className="max-w-md mx-auto">

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import type { Claims } from "../types/user";
-import type { Profile } from "../types/profile";
+// import type { Profile } from "../types/profile";
 import supabase from "../utils/supabase";
 
 type AuthStore = {
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthStore>()(
           // (1) 클레임 가져오기
           const { data, error } = await supabase.auth.getClaims();
 
-          // 세션 없음 or 초기화전일 수 있음
+          // 세션 없음 or 초기화 전일 수 있음
           if (error) {
             set({ claims: null, profile: null, isLoading: false });
             return;
@@ -47,11 +47,12 @@ export const useAuthStore = create<AuthStore>()(
             const { data: profiles, error: profilesError } = await supabase
               .from("profiles")
               .select("*")
-              .eq("id", claims.sub || "")
-              .single();
+              .eq("id", claims.sub)
+              .single(); // 배열 말고 객체 한개를 리턴
 
             if (profilesError) {
               set({ claims: null, profile: null, isLoading: false });
+              return;
             }
 
             set({ profile: profiles ?? null });
@@ -65,7 +66,7 @@ export const useAuthStore = create<AuthStore>()(
             state.profile = null;
           }),
       })),
-      { name: "auto-store" }
+      { name: "auth-store" }
     )
   )
 );

@@ -14,6 +14,7 @@ export default function AuthBootstrap() {
     const { data: sub } = supabase.auth.onAuthStateChange(async (event) => {
       if (event === "SIGNED_OUT") clearAuth();
     });
+
     return () => sub.subscription.unsubscribe();
   }, [hydrateFromAuth, clearAuth]);
   return null;

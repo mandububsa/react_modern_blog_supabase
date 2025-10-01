@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Calendar, Edit3, Save, X } from "lucide-react";
+// import supabase from "../../utils/supabase";
 // import ProfileSkeleton from "../../components/loading/ProfileSkeleton";
 
 export default function Profile() {
@@ -46,6 +47,14 @@ export default function Profile() {
       status: "Published",
     },
   ];
+
+  // async function signOut() {
+  //   try {
+  //     const { error } = await supabase.auth.signOut();
+  //     if (error) throw error;
+  //     // navigate
+  //   }
+  // }
 
   return (
     <div>
